@@ -3,10 +3,6 @@ import torch
 from torchvision.models import vgg19
 import torch.nn.functional as F
 
-# try swish?
-def swish(x):
-    return x * F.sigmoid(x)
-
 class DownBlock(nn.Module):
     def __init__(self, scale):
         super().__init__()
@@ -84,13 +80,10 @@ class Get_gradient_nopadding(nn.Module):
 
         return x
 
-#  没有最后一层池化层、全连接层、softmax层的VGG19，且最后一层卷积未激活，尺寸要能被16整除。与SRGAN不同，作者认为克服了两个缺点。
-
 class FeatureExtractor(nn.Module):
 
     def __init__(self):
         super(FeatureExtractor, self).__init__()
-        # vgg19预训练模型
         vgg19_model = vgg19(pretrained=True)
         mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
         # [0.485-1, 0.456-1, 0.406-1] if input in range [-1,1]
@@ -107,7 +100,6 @@ class FeatureExtractor(nn.Module):
         output = self.vgg19_54(img)
         return output
 
-#
 class DenseResidualBlock(nn.Module):
 
     def __init__(self, grow_ch, res_scale=0.2):
@@ -247,7 +239,7 @@ class Generator(nn.Module):
         gm4 = self.conv2_0(gm4)
         gm4 = torch.add(gm4, gm)  # 64 channel
         gm4 = self.gradient_upsanmpling(gm4)  # 64 * 128 * 128
-        gm_out_d = gm4  # 64 * 128 * 128  gm_out_d的更新会传给gm4吗
+        gm_out_d = gm4  # 64 * 128 * 128
         gm_out = self.conv3_0(gm4)  # 3 * 128 * 128 gm branch
 
         # 在上采样之后直接fusion 然后卷积生成SR
